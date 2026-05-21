@@ -11,7 +11,7 @@ DRYAD_CLIENT_ID and DRYAD_CLIENT_SECRET in your environment first."></head><body
 
     <a class="navbar-brand me-2" href="../index.html">dryaddata</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,13 +51,20 @@ They require a valid OAuth2 bearer token (see <code><a href="dryad_auth.html">dr
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">dryad_download_dataset</span><span class="op">(</span><span class="va">doi</span>, path <span class="op">=</span> <span class="cn">NULL</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>, unzip <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">dryad_download_dataset</span><span class="op">(</span></span>
+<span>  <span class="va">doi</span>,</span>
+<span>  path <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  unzip <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  on_too_large <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ask"</span>, <span class="st">"files"</span>, <span class="st">"error"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">dryad_download_version</span><span class="op">(</span></span>
 <span>  <span class="va">version_id</span>,</span>
 <span>  path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  unzip <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  unzip <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  on_too_large <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ask"</span>, <span class="st">"files"</span>, <span class="st">"error"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">dryad_download_file</span><span class="op">(</span><span class="va">file_id</span>, path <span class="op">=</span> <span class="cn">NULL</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
@@ -85,7 +92,18 @@ folder, a scratch volume, a <code><a href="https://rdrr.io/r/base/tempfile.html"
 
 <dt id="arg-unzip">unzip<a class="anchor" aria-label="anchor" href="#arg-unzip"></a></dt>
 <dd><p>If <code>TRUE</code> (dataset / version downloads only), the archive
-is extracted into a sibling directory and that directory is returned.</p></dd>
+is extracted into a sibling directory and that directory is returned.
+Ignored when the per-file fallback runs (see <code>on_too_large</code>); files
+are then written to the directory directly.</p></dd>
+
+
+<dt id="arg-on-too-large">on_too_large<a class="anchor" aria-label="anchor" href="#arg-on-too-large"></a></dt>
+<dd><p>One of <code>"ask"</code> (the default), <code>"files"</code>, or
+<code>"error"</code>. Controls what happens when Dryad refuses to generate the
+zip because the dataset / version is too large. <code>"ask"</code> prompts in
+interactive sessions and falls back without prompting otherwise;
+<code>"files"</code> always falls back to per-file downloads; <code>"error"</code> rethrows
+the original HTTP error.</p></dd>
 
 
 <dt id="arg-version-id">version_id<a class="anchor" aria-label="anchor" href="#arg-version-id"></a></dt>
@@ -98,8 +116,9 @@ is extracted into a sibling directory and that directory is returned.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Absolute path to the downloaded file (or, with <code>unzip = TRUE</code>,
-to the directory of extracted contents), invisibly.</p>
+    <p>Absolute path to the downloaded file (or, with <code>unzip = TRUE</code>
+or when the per-file fallback runs, to the directory of downloaded
+contents), invisibly.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -111,6 +130,15 @@ existing destination is returned as-is, with no network call.</p>
 <code>application/zip</code> archive containing all files in the (latest) version
 or specified version respectively. <code>dryad_download_file()</code> fetches the
 bytes of a single file, using its server-side filename and MIME type.</p>
+<p>Dryad refuses to generate a single zip for datasets above an internal
+size limit, returning HTTP 405 with the body
+<code>"The dataset is too large for zip file generation."</code>. When that
+happens, <code>dryad_download_dataset()</code> and <code>dryad_download_version()</code>
+fall back to downloading each file in the version individually into a
+directory. The fallback behavior is controlled by <code>on_too_large</code>: in
+interactive sessions the default <code>"ask"</code> prompts before downloading;
+in non-interactive sessions it proceeds without prompting. Pass
+<code>"files"</code> to skip the prompt or <code>"error"</code> to disable the fallback.</p>
     </div>
 
     <div class="section level2">
@@ -132,6 +160,13 @@ bytes of a single file, using its server-side filename and MIME type.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># 3. A single file written to a chosen destination:</span></span></span>
 <span class="r-in"><span><span class="va">csv</span> <span class="op">&lt;-</span> <span class="fu">dryad_download_file</span><span class="op">(</span><span class="fl">94868</span>, path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"data.csv"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># 4. Skip the interactive prompt and always fall back to per-file</span></span></span>
+<span class="r-in"><span><span class="co">#    downloads when the dataset exceeds Dryad's zip size limit.</span></span></span>
+<span class="r-in"><span><span class="fu">dryad_download_dataset</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="st">"doi:10.5061/dryad.kprr4xhk6"</span>,</span></span>
+<span class="r-in"><span>  on_too_large <span class="op">=</span> <span class="st">"files"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

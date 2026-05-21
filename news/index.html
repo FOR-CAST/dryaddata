@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">dryaddata</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,12 +39,19 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.0.2" id="dryaddata-002">dryaddata 0.0.2<a class="anchor" aria-label="anchor" href="#dryaddata-002"></a></h2>
+<ul><li>
+<code><a href="../reference/dryad_download_dataset.html">dryad_download_dataset()</a></code> and <code><a href="../reference/dryad_download_dataset.html">dryad_download_version()</a></code> gain an <code>on_too_large</code> argument and now fall back to downloading each file in the version individually when Dryad refuses to generate a single zip (HTTP 405 “The dataset is too large for zip file generation.”). In interactive sessions the default <code>"ask"</code> prompts before downloading; in non-interactive sessions it proceeds without prompting. Pass <code>"files"</code> to always skip the prompt or <code>"error"</code> to keep the previous behavior.</li>
+<li>HTTP error messages now surface the API’s plain-text response body verbatim, rather than collapsing it to a generic status description (e.g. “Method Not Allowed”).</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.1" id="dryaddata-001">dryaddata 0.0.1<a class="anchor" aria-label="anchor" href="#dryaddata-001"></a></h2>
 <ul><li>Initial release. Wrappers for the Dryad REST API v2: search datasets, retrieve dataset / version / file metadata, and download files or dataset archives. OAuth2 client-credentials authentication for protected endpoints. On-disk caching of responses and downloads, configurable via the <code>dryaddata.cache_dir</code> option or the <code>DRYADDATA_CACHE_DIR</code> environment variable.</li>
 <li>
 <code><a href="../reference/dryad_use_sandbox.html">dryad_use_sandbox()</a></code> toggles the active host between Dryad’s sandbox and production deployments; pass <code>FALSE</code> to switch back to production.</li>
 </ul></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

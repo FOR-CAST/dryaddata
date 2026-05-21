@@ -9,13 +9,20 @@ first.
 ## Usage
 
 ``` r
-dryad_download_dataset(doi, path = NULL, overwrite = FALSE, unzip = FALSE)
+dryad_download_dataset(
+  doi,
+  path = NULL,
+  overwrite = FALSE,
+  unzip = FALSE,
+  on_too_large = c("ask", "files", "error")
+)
 
 dryad_download_version(
   version_id,
   path = NULL,
   overwrite = FALSE,
-  unzip = FALSE
+  unzip = FALSE,
+  on_too_large = c("ask", "files", "error")
 )
 
 dryad_download_file(file_id, path = NULL, overwrite = FALSE)
@@ -44,7 +51,17 @@ dryad_download_file(file_id, path = NULL, overwrite = FALSE)
 - unzip:
 
   If `TRUE` (dataset / version downloads only), the archive is extracted
-  into a sibling directory and that directory is returned.
+  into a sibling directory and that directory is returned. Ignored when
+  the per-file fallback runs (see `on_too_large`); files are then
+  written to the directory directly.
+
+- on_too_large:
+
+  One of `"ask"` (the default), `"files"`, or `"error"`. Controls what
+  happens when Dryad refuses to generate the zip because the dataset /
+  version is too large. `"ask"` prompts in interactive sessions and
+  falls back without prompting otherwise; `"files"` always falls back to
+  per-file downloads; `"error"` rethrows the original HTTP error.
 
 - version_id:
 
@@ -56,8 +73,9 @@ dryad_download_file(file_id, path = NULL, overwrite = FALSE)
 
 ## Value
 
-Absolute path to the downloaded file (or, with `unzip = TRUE`, to the
-directory of extracted contents), invisibly.
+Absolute path to the downloaded file (or, with `unzip = TRUE` or when
+the per-file fallback runs, to the directory of downloaded contents),
+invisibly.
 
 ## Details
 
@@ -72,6 +90,16 @@ as-is, with no network call.
 `application/zip` archive containing all files in the (latest) version
 or specified version respectively. `dryad_download_file()` fetches the
 bytes of a single file, using its server-side filename and MIME type.
+
+Dryad refuses to generate a single zip for datasets above an internal
+size limit, returning HTTP 405 with the body
+`"The dataset is too large for zip file generation."`. When that
+happens, `dryad_download_dataset()` and `dryad_download_version()` fall
+back to downloading each file in the version individually into a
+directory. The fallback behavior is controlled by `on_too_large`: in
+interactive sessions the default `"ask"` prompts before downloading; in
+non-interactive sessions it proceeds without prompting. Pass `"files"`
+to skip the prompt or `"error"` to disable the fallback.
 
 ## Examples
 
@@ -93,5 +121,12 @@ zip2 <- dryad_download_dataset("doi:10.5061/dryad.j1fd7")
 
 # 3. A single file written to a chosen destination:
 csv <- dryad_download_file(94868, path = file.path(tempdir(), "data.csv"))
+
+# 4. Skip the interactive prompt and always fall back to per-file
+#    downloads when the dataset exceeds Dryad's zip size limit.
+dryad_download_dataset(
+  "doi:10.5061/dryad.kprr4xhk6",
+  on_too_large = "files"
+)
 } # }
 ```
