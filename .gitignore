@@ -1,0 +1,12 @@
+*.Rcheck/
+*.tar.gz
+.claude/
+.RData
+.Rhistory
+.Rproj.user
+.Ruserdata
+/doc/
+/Meta/
+docs/
+inst/doc/
+scratch/

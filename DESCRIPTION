@@ -1,0 +1,38 @@
+Package: dryaddata
+Title: Programmatic Access to the Dryad Data Repository
+Version: 0.0.1
+Authors@R:
+    person("Alex M", "Chubaty",
+           email = "achubaty@for-cast.ca",
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-7146-8135"))
+Description: A modern client for the Dryad (<https://datadryad.org>) REST API
+    (version 2). Search and retrieve dataset metadata, list versions and files,
+    and download data files or full dataset archives. Authenticated downloads
+    use OAuth2 client credentials. Responses and downloaded files are cached
+    on disk in a user-configurable location.
+License: MIT + file LICENSE
+URL: https://github.com/FOR-CAST/dryaddata, https://for-cast.github.io/dryaddata/
+BugReports: https://github.com/FOR-CAST/dryaddata/issues
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 8.0.0
+Depends:
+    R (>= 4.4)
+Imports:
+    cli,
+    httr2 (>= 1.0.0),
+    jsonlite,
+    keyring,
+    rlang,
+    tools,
+    utils
+Suggests:
+    askpass,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    withr
+Config/testthat/edition: 3
+Config/testthat/parallel: true
+VignetteBuilder: knitr

@@ -1,0 +1,56 @@
+url: https://for-cast.github.io/dryaddata/
+
+template:
+  bootstrap: 5
+
+reference:
+- title: Search and metadata
+  desc: Open endpoints — no credentials required.
+  contents:
+  - dryad_search
+  - dryad_datasets
+  - dryad_dataset
+  - dryad_dataset_versions
+  - dryad_version
+  - dryad_version_files
+  - dryad_file
+
+- title: Download
+  desc: Stream files and archives to disk. Requires OAuth2 credentials.
+  contents:
+  - dryad_download_dataset
+  - dryad_download_version
+  - dryad_download_file
+
+- title: Authentication
+  desc: OAuth2 client-credentials helpers. Credentials are stored in the OS
+    keychain via the keyring package.
+  contents:
+  - dryad_set_credentials
+  - dryad_auth
+  - dryad_has_credentials
+  - dryad_clear_credentials
+  - dryad_clear_token
+
+- title: Configuration and caching
+  desc: Host URLs, environment variables, and the on-disk cache.
+  contents:
+  - dryad_base_url
+  - dryad_token_url
+  - dryad_use_sandbox
+  - dryad_cache_dir
+  - dryad_cache_clear
+  - dryad_cache_info
+
+- title: Package
+  contents:
+  - dryaddata-package
+  - dryaddata_options
+
+articles:
+- title: Articles
+  navbar: ~
+  contents:
+  - dryaddata
+  - searching
+  - downloading

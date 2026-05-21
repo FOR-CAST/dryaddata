@@ -1,0 +1,106 @@
+---
+title: "Getting started with dryaddata"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with dryaddata}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+# Chunks below hit live Dryad. They evaluate only when the build opts in
+# via `Sys.setenv(DRYADDATA_BUILD_LIVE_VIGNETTES = "true")`; otherwise the
+# vignette knits as static text. See `?dryaddata::dryad_vignette_live`.
+live <- dryaddata::dryad_vignette_live()
+has_credentials <- live && dryaddata::dryad_has_credentials()
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = live)
+```
+
+`dryaddata` is a thin, modern R client for the Dryad REST API (v2). It
+helps you search and retrieve dataset metadata, walk through versions and
+files, and download content. OAuth2 authentication and a shared on-disk
+cache are built in.
+
+```{r}
+library(dryaddata)
+```
+
+## Production by default
+
+`dryaddata` is pointed at Dryad's production deployment out of the box:
+
+```{r}
+dryad_base_url()
+#> [1] "https://datadryad.org/api/v2"
+```
+
+To register for OAuth2 credentials (needed for the `dryad_download_*()`
+family), follow the setup steps in
+`vignette("downloading", package = "dryaddata")`.
+
+If you want to experiment without touching production data, `dryaddata`
+also supports Dryad's public sandbox. `dryad_use_sandbox()` repoints both
+the API and the OAuth token URLs at the sandbox host; `dryad_use_sandbox(FALSE)`
+reverses the change. The helper returns the previous URLs invisibly so you
+can restore them. Sandbox accounts are independent of production; register
+separately at <https://sandbox.datadryad.org/account>.
+
+## Anatomy of a list response
+
+Endpoints that return lists (search, datasets, versions, files) all share
+a common envelope:
+
+```{r}
+hits <- dryad_search(q = "soil", per_page = 5)
+
+names(hits)
+#> [1] "metadata" "records"  "data"
+
+hits$metadata$count   # records on this page
+hits$metadata$total   # total matches across all pages
+head(hits$data[, c("identifier", "title")])
+```
+
+* `metadata` holds counts and the raw HAL `_links` block (`self`, `next`,
+  `prev`, ...).
+* `records` is the untouched list of objects as returned by the API.
+  Useful when you need a nested field like `authors` or `_links`.
+* `data` is a tidy data frame that stacks scalar fields and keeps
+  nested ones as list-columns.
+
+## Walking from a DOI to bytes
+
+```{r}
+ds <- dryad_dataset("doi:10.5061/dryad.j1fd7")
+ds$title
+ds$abstract
+
+vs <- dryad_dataset_versions(ds$identifier)
+latest <- vs$data$id[which.max(vs$data$versionNumber)]
+
+fl <- dryad_version_files(latest)
+fl$data[, c("path", "size", "mimeType")]
+```
+
+Downloading a file requires authenticated credentials (see
+`?dryad_auth`). The chunk below only runs when `DRYAD_CLIENT_ID` and
+`DRYAD_CLIENT_SECRET` are set in the build environment.
+
+Pass `path =` to set the destination file; otherwise the file is
+cached at `dryad_cache_dir()`. The example uses `tempdir()` so the
+downloaded file is removed when the R session ends.
+
+```{r, eval = has_credentials}
+csv_path <- dryad_download_file(
+  fl$data$id[1],
+  path = file.path(tempdir(), "first-file.csv")
+)
+csv_path
+```
+
+## Where to go next
+
+* Pagination, filters, and the search query language:
+  `vignette("searching")`.
+* OAuth setup, the download cache, and large transfers:
+  `vignette("downloading")`.
