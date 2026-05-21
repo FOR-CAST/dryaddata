@@ -1,0 +1,95 @@
+# Searching Dryad
+
+[`dryad_search()`](https://for-cast.github.io/dryaddata/reference/dryad_search.md)
+wraps `GET /search`. The package targets Dryad’s production deployment
+by default; the snippets below assume that. To run the same calls
+against the sandbox while exploring, prefix the session with
+[`dryad_use_sandbox()`](https://for-cast.github.io/dryaddata/reference/dryad_use_sandbox.md).
+
+``` r
+
+library(dryaddata)
+```
+
+## Query syntax
+
+The `q` argument accepts the same shorthand the API does:
+
+- Multi-term queries are AND-ed: `q = "soil carbon"` returns datasets
+  matching *both* terms.
+- Prefix a term with `-` to negate: `q = "carbon -ocean"`.
+- Append `*` for prefix matching: `q = "soil*"`.
+
+``` r
+
+dryad_search(q = "soil carbon", per_page = 3)
+```
+
+## Filtering
+
+The named arguments map straight onto the underlying parameters:
+
+``` r
+
+dryad_search(
+  q                = "carbon",
+  subject          = "soil science",
+  orcid            = "0000-0001-7146-8135",
+  funder           = "https://ror.org/021nxhr62",
+  published_since  = "2024-01-01T00:00:00Z",
+  published_before = "2026-12-31T23:59:59Z",
+  per_page         = 5
+)
+```
+
+[`dryad_datasets()`](https://for-cast.github.io/dryaddata/reference/dryad_datasets.md)
+exposes a similar set of filters but without free text
+(`publication_issn`, `publication_name`, `manuscript_number`,
+`curation_status`).
+
+## Pagination
+
+By default you get one page (`per_page` defaults to 20, max 100). For
+larger result sets either step manually:
+
+``` r
+
+page2 <- dryad_search(q = "soil", page = 2, per_page = 50)
+```
+
+or pull everything with `all_pages = TRUE`. The result combines the
+underlying pages into a single `records` / `data` block;
+`metadata$pages` tells you how many requests were made.
+
+``` r
+
+all_soil <- dryad_search(q = "soil", per_page = 100, all_pages = TRUE)
+nrow(all_soil$data)
+all_soil$metadata$pages
+```
+
+Use `max_pages` as a circuit breaker for unfamiliar queries:
+
+``` r
+
+dryad_search(q = "soil", per_page = 100, all_pages = TRUE, max_pages = 5)
+```
+
+## Working with nested fields
+
+Because `data` keeps complex fields as list-columns, vectorized access
+is a single [`vapply()`](https://rdrr.io/r/base/lapply.html) or
+[`lapply()`](https://rdrr.io/r/base/lapply.html) away. For example,
+pulling the primary author from each hit:
+
+``` r
+
+hits <- dryad_search(q = "soil", per_page = 5)
+vapply(hits$data$authors, function(a) {
+  if (length(a)) paste(a[[1]]$firstName, a[[1]]$lastName) else NA_character_
+}, character(1))
+```
+
+When you need a fully-flattened representation, the raw `records` list
+is trivial to hand to `tidyr::unnest_wider()` or
+[`purrr::map_dfr()`](https://purrr.tidyverse.org/reference/map_dfr.html).
