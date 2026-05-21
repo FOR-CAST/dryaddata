@@ -1,6 +1,6 @@
 Package: dryaddata
 Title: Programmatic Access to the Dryad Data Repository
-Version: 0.0.1
+Version: 0.0.2
 Authors@R:
     person("Alex M", "Chubaty",
            email = "achubaty@for-cast.ca",

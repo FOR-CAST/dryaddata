@@ -96,15 +96,47 @@ is_transient_dryad <- function(resp) {
 
 dryad_error_body <- function(resp) {
   status <- httr2::resp_status(resp)
+  msg <- error_message_from_resp(resp)
+  out <- c(paste0("Dryad API request failed (HTTP ", status, ")."), msg)
+  if (is_too_large_message(msg)) {
+    out <- c(
+      out,
+      "Use `dryad_version_files()` to list files and `dryad_download_file()` to fetch them individually."
+    )
+  }
+  out
+}
+
+is_too_large_message <- function(msg) {
+  !is.null(msg) && nzchar(msg) && grepl("too large", msg, ignore.case = TRUE)
+}
+
+## Pull a human-readable message off an error response. Tries JSON first
+## (the API's usual shape: `{"error": "..."}` or `{"message": "..."}`), then
+## a non-empty plain-text body (the API uses text/plain for some 4xx
+## responses, e.g. the "dataset is too large" 405 on `/versions/{id}/download`),
+## and finally falls back to the HTTP status description.
+error_message_from_resp <- function(resp) {
+  type <- tryCatch(httr2::resp_content_type(resp), error = function(e) "")
+  if (grepl("json", type, fixed = TRUE)) {
+    msg <- tryCatch(
+      {
+        body <- httr2::resp_body_json(resp, check_type = FALSE)
+        body$error %||% body$message %||% NULL
+      },
+      error = function(e) NULL
+    )
+    if (!is.null(msg) && nzchar(msg)) {
+      return(msg)
+    }
+  }
   msg <- tryCatch(
     {
-      body <- httr2::resp_body_json(resp, check_type = FALSE)
-      body$error %||% body$message %||% NULL
+      txt <- httr2::resp_body_string(resp)
+      txt <- trimws(txt)
+      if (nzchar(txt)) txt else NULL
     },
     error = function(e) NULL
   )
-  if (is.null(msg)) {
-    msg <- httr2::resp_status_desc(resp)
-  }
-  c(paste0("Dryad API request failed (HTTP ", status, ")."), "i" = msg)
+  msg %||% httr2::resp_status_desc(resp)
 }

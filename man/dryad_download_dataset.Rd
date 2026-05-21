@@ -6,13 +6,20 @@
 \alias{dryad_download_file}
 \title{Download a Dryad dataset, version, or file}
 \usage{
-dryad_download_dataset(doi, path = NULL, overwrite = FALSE, unzip = FALSE)
+dryad_download_dataset(
+  doi,
+  path = NULL,
+  overwrite = FALSE,
+  unzip = FALSE,
+  on_too_large = c("ask", "files", "error")
+)
 
 dryad_download_version(
   version_id,
   path = NULL,
   overwrite = FALSE,
-  unzip = FALSE
+  unzip = FALSE,
+  on_too_large = c("ask", "files", "error")
 )
 
 dryad_download_file(file_id, path = NULL, overwrite = FALSE)
@@ -29,15 +36,25 @@ folder, a scratch volume, a \code{tempfile()}, etc.). When \code{NULL}
 \item{overwrite}{If \code{TRUE}, re-download even if the destination exists.}
 
 \item{unzip}{If \code{TRUE} (dataset / version downloads only), the archive
-is extracted into a sibling directory and that directory is returned.}
+is extracted into a sibling directory and that directory is returned.
+Ignored when the per-file fallback runs (see \code{on_too_large}); files
+are then written to the directory directly.}
+
+\item{on_too_large}{One of \code{"ask"} (the default), \code{"files"}, or
+\code{"error"}. Controls what happens when Dryad refuses to generate the
+zip because the dataset / version is too large. \code{"ask"} prompts in
+interactive sessions and falls back without prompting otherwise;
+\code{"files"} always falls back to per-file downloads; \code{"error"} rethrows
+the original HTTP error.}
 
 \item{version_id}{Numeric or character dataset-version id.}
 
 \item{file_id}{Numeric or character file id.}
 }
 \value{
-Absolute path to the downloaded file (or, with \code{unzip = TRUE},
-to the directory of extracted contents), invisibly.
+Absolute path to the downloaded file (or, with \code{unzip = TRUE}
+or when the per-file fallback runs, to the directory of downloaded
+contents), invisibly.
 }
 \description{
 These functions download binary content from Dryad and write it to disk.
@@ -54,6 +71,16 @@ existing destination is returned as-is, with no network call.
 \code{application/zip} archive containing all files in the (latest) version
 or specified version respectively. \code{dryad_download_file()} fetches the
 bytes of a single file, using its server-side filename and MIME type.
+
+Dryad refuses to generate a single zip for datasets above an internal
+size limit, returning HTTP 405 with the body
+\code{"The dataset is too large for zip file generation."}. When that
+happens, \code{dryad_download_dataset()} and \code{dryad_download_version()}
+fall back to downloading each file in the version individually into a
+directory. The fallback behavior is controlled by \code{on_too_large}: in
+interactive sessions the default \code{"ask"} prompts before downloading;
+in non-interactive sessions it proceeds without prompting. Pass
+\code{"files"} to skip the prompt or \code{"error"} to disable the fallback.
 }
 \examples{
 \dontrun{
@@ -73,5 +100,12 @@ zip2 <- dryad_download_dataset("doi:10.5061/dryad.j1fd7")
 
 # 3. A single file written to a chosen destination:
 csv <- dryad_download_file(94868, path = file.path(tempdir(), "data.csv"))
+
+# 4. Skip the interactive prompt and always fall back to per-file
+#    downloads when the dataset exceeds Dryad's zip size limit.
+dryad_download_dataset(
+  "doi:10.5061/dryad.kprr4xhk6",
+  on_too_large = "files"
+)
 }
 }
